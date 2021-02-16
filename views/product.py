@@ -1,5 +1,6 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_restful import Resource, reqparse
+from flask import abort
 
 from models.product_group import ProductGroup
 from models.product import Product
@@ -28,7 +29,7 @@ class ProductView(Resource):
         group_id = data.get('group_id')
 
         if not current_user.has_group_rights(group_id) or not current_user.has_product_rights(product_id):
-            return {}, 403
+            abort(403)
 
         if group_id:
             product_group = ProductGroup.query.filter_by(id=group_id).all()
@@ -61,7 +62,7 @@ class ProductView(Resource):
             return {'msg': 'Product group does not exist'}, 400
 
         if not current_user.has_group_rights(product_group_id):
-            return {}, 403
+            abort(403)
 
         new_product = Product(title, product_group_id)
         DIServices.db_session_manager().add(new_product)
@@ -84,7 +85,7 @@ class ProductView(Resource):
             return {'msg': 'product_group_id required'}, 400
 
         if not current_user.has_group_rights(product_group_id) or not current_user.has_product_rights(product_id):
-            return {}, 403
+            abort(403)
 
         if not ProductGroup.query.filter_by(id=product_group_id).first():
             return {'msg': 'Product group does not exist'}, 400
@@ -105,7 +106,7 @@ class ProductView(Resource):
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
 
         if not current_user.has_product_rights(product_id):
-            return {}, 403
+            abort(403)
 
         if product := Product.query.filter_by(id=product_id).first():
             DIServices.db_session_manager().delete(product)

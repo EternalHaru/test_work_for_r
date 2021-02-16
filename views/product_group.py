@@ -1,5 +1,6 @@
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_restful import Resource, reqparse
+from flask import abort
 
 from models.product_group import ProductGroup
 from models.user import User
@@ -27,7 +28,7 @@ class ProductGroupView(Resource):
             if current_user.has_group_rights(product_group_id):
                 product_group_tree = ProductGroup.query.filter_by(id=product_group_id).all()
             else:
-                return {}, 403
+                abort(403)
         else:
             if len(current_user.available_product_groups) == 0:
                 product_group_tree = ProductGroup.query.filter_by(parent_id=None).all()
@@ -59,7 +60,7 @@ class ProductGroupView(Resource):
 
         if parent_id:
             if not current_user.has_group_rights(parent_id):
-                return {}, 403
+                abort(403)
 
         if parent_id and not ProductGroup.query.filter_by(id=parent_id).first():
             return {'msg': 'Branch parent does not exist'}, 400
@@ -85,7 +86,7 @@ class ProductGroupView(Resource):
         children = data.get('children')
 
         if not current_user.has_group_rights(product_group_id, parent_id):
-            return {}, 403
+            abort(403)
 
         product_group = ProductGroup.query.filter_by(id=product_group_id).first()
 
@@ -119,7 +120,7 @@ class ProductGroupView(Resource):
         current_user = User.query.filter_by(username=get_jwt_identity()).first()
 
         if not current_user.has_group_rights(product_group_id):
-            return {}, 403
+            abort(403)
 
         if product_group := ProductGroup.query.filter_by(id=product_group_id).first():
             DIServices.db_session_manager().delete(product_group)
